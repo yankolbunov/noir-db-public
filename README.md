@@ -1,5 +1,7 @@
 # Noir DB
 
+**English** | [Русский](README.ru.md)
+
 **A macOS client for PostgreSQL focused on SQL and data analysis.**
 
 Noir DB combines a smart SQL editor, safe transactional table editing and built-in analytics tools: charts, pivot tables and result comparison. It has a native Apple-style interface with dark and light themes. Built with Python, pywebview and plain HTML/CSS/JS, with no frameworks.
@@ -113,24 +115,3 @@ Settings and connections are stored in `~/Library/Application Support/NoirDB/`. 
 
 MIT, see [LICENSE](LICENSE). Author: Yan Kolbunov.
 
----
-
-## По-русски
-
-**Noir DB** – клиент PostgreSQL для macOS с упором на SQL и анализ данных:
-- умный редактор с автодополнением, подсказками JOIN и исправлением ошибок в один клик;
-- правка таблиц в транзакциях;
-- графики, сводные таблицы и сравнение результатов;
-- импорт CSV и Excel;
-- SSH-туннели.
-
-Интерфейс на русском и английском, тёмная и светлая тема.
-
-**Как установить.** Нужен Mac с чипом Apple (M1 или новее).
-1. На странице [Releases](../../releases) скачай `NoirDB-*.zip` и распакуй его.
-2. Перетащи **Noir DB.app** в «Программы».
-3. Приложение не заверено Apple, поэтому при первом запуске нажми **правый клик → «Открыть» → «Открыть»**. Если не пускает: «Системные настройки → Конфиденциальность и безопасность → Всё равно открыть».
-
-Демо-базы для тренировки лежат в папке `demo`. Чтобы загрузить: «•••» рядом с выбором базы → «Новая база», затем «Импорт SQL».
-
-Разработчик – Ян Колбунов, © 2026.
