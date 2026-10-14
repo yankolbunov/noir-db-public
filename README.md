@@ -1,175 +1,136 @@
 # Noir DB
 
-A fast, dark, Apple-style **PostgreSQL client for SQL and analytics** on macOS. Built with Python, pywebview and plain HTML/CSS/JS.
+**A macOS client for PostgreSQL focused on SQL and data analysis.**
 
-**Highlights:** SQL editor with autocomplete, JOIN suggestions and one-click error fixes · editable tables saved in a single transaction · charts, pivot tables and result comparison · import from CSV/Excel · SSH tunnels · dark and light themes, Liquid Glass look · Russian and English interface.
+Noir DB combines a smart SQL editor, safe transactional table editing and built-in analytics tools: charts, pivot tables and result comparison. It has a native Apple-style interface with dark and light themes. Built with Python, pywebview and plain HTML/CSS/JS, with no frameworks.
 
-> The interface is available in Russian and English (Settings → Appearance → Language). The detailed feature list below is in Russian.
+The interface is available in English and Russian (Settings → Appearance → Language).
 
-## Download and run (macOS, Apple Silicon)
+## Download and run
+
+Requirements: macOS on Apple Silicon (M1 or newer) and a PostgreSQL server (local or remote).
 
 1. Download `NoirDB-*.zip` from the [Releases](../../releases) page and unzip it.
 2. Drag **Noir DB.app** to *Applications*.
-3. The app is not notarized by Apple, so on first launch macOS will say it can't be opened. **Right-click the app → Open → Open.** (If it still refuses: *System Settings → Privacy & Security → Open Anyway*.)
-4. Create a connection to your PostgreSQL server. Passwords are stored in the macOS Keychain.
+3. The app is not notarized by Apple, so on first launch macOS will block it. **Right-click the app → Open → Open.** If it still refuses, go to *System Settings → Privacy & Security → Open Anyway*.
+4. Add a connection to your PostgreSQL server. Passwords are stored in the macOS Keychain.
 
-Want to try it without your own database? Import `demo/noir_shop.sql` (online shop) or `demo/noir_university.sql` (university) – the sample data is entirely made up.
+**Sample databases.** Two demo databases with made-up data are included: `demo/noir_shop.sql` (an online shop) and `demo/noir_university.sql` (a university with faculties, students, grades and payments). To load one in the app, click **•••** next to the database picker → *New database*, then *Import SQL* → choose the file.
+
+## Features
+
+### SQL editor
+- Syntax highlighting, line numbers, and the line with an error highlighted.
+- **Run the statement under the cursor** (⌘↵), or the whole script (⇧⌘↵).
+- **Autocomplete** for tables, columns (including through aliases like `o.`), keywords and functions.
+- **JOIN suggestions based on foreign keys.** After `JOIN`, related tables come first, complete with an alias and the `ON` condition.
+- **Value hints.** After `status = '` or `IN ('`, the editor suggests real values from the column.
+- **Snippets** for common analytics queries: top-N, monthly totals, share of total, running totals, ranking, duplicates, CTEs. Columns are picked automatically based on the data.
+- **Error assistant.** Mistakes are underlined and explained in plain language, with a corrected query applied in one click. It handles typos in names, missing `GROUP BY` columns, ambiguous columns, undeclared aliases and more. Common problems are caught while you type, before you run the query.
+- **Variables** `{{name}}`. Input fields appear above the result, and values are passed safely as parameters.
+- SQL formatting (⇧⌘F), find and replace (⌘F), and toggling comments (⌘/).
+- **Transactions.** In *Auto* mode every query is committed at once. In *Manual* mode changes wait for *Commit* or *Roll back*.
+- Query history, saved queries, `.sql` files, and tabs that are restored after restart.
+
+### Data
+- Browse tables with sorting, full-text search, column filters and pagination.
+- **Inline editing**, as in a spreadsheet. Changed, new and deleted rows are highlighted and saved together **in a single transaction**: either everything is saved or nothing is.
+- Editing a foreign-key column shows a searchable list of rows from the referenced table.
+- Clickable foreign keys open the related row. *Where used* shows which rows reference the current one.
+- **Column statistics**: count, nulls, distinct values, min, max, average, median, top values and a histogram.
+- Cell selection shows sum, average, min, max and count. Copied data pastes cleanly into Excel, Numbers, Notes, Word and messengers.
+- **Search a value across the whole database.**
+- Import from CSV and Excel (`.xlsx`), into an existing table or as a new one with column types detected automatically.
+
+### Analytics
+- **Charts**: line, bar, pie, histogram and scatter.
+- **Pivot tables**, calculated by PostgreSQL on the full result.
+- **Result comparison.** Pin a result as a baseline, change the query and see which rows were added, removed or changed.
+- Export to CSV and Excel (with the chart on a separate sheet) and the chart as PNG.
+- Save a result as a live query, as a table snapshot in the database, or as a database **view**.
+
+### Structure
+- A table designer for creating and changing tables: types, keys, required and unique fields, defaults and comments. All changes run in one transaction, and you can preview the SQL first.
+- Read-only structure view: columns, relationships, indexes and DDL.
+- **Database diagram** that shows tables and their relationships.
+- Create, import and drop databases.
+
+### Safety
+- **Read-only connections**, enforced by PostgreSQL itself.
+- Warnings for `UPDATE` or `DELETE` without `WHERE`, and confirmation before destructive commands.
+- Query timeout and query cancellation.
+- Color labels for connections, for example red for production.
+- **SSH tunnels**, with key or password sign-in.
+- Automatic reconnection after sleep.
+- Clear, human-readable error messages instead of raw PostgreSQL errors.
+
+### Interface
+- Native macOS look: dark, light or system theme, plus an optional *Liquid Glass* style.
+- Resizable and auto-fitting columns, and per-column text alignment.
+- Works at window sizes down to 900×560.
+
+## Keyboard shortcuts
+
+| Keys | Action |
+|---|---|
+| ⌘ ↵ | Run the statement under the cursor (or the selection) |
+| ⇧ ⌘ ↵ | Run the whole script |
+| ⌘ S | Save table changes or the query |
+| ⌘ T | New query |
+| ⇧ ⌘ F | Format SQL |
+| ⌘ F | Find and replace |
+| ⌘ / | Toggle comment |
+| ⌘ C | Copy selected cells |
+| Ctrl Space | Show suggestions |
 
 ## Build from source
 
-Needs Python 3.9+. Run `Установить Noir DB.command` (right-click → Open): it creates a virtual environment, installs dependencies, builds the app with PyInstaller and puts it into *Applications*. For development: `python3 dev/dev_server.py` opens the interface in a browser.
+You need Python 3.9 or newer. Right-click `Установить Noir DB.command` (*Install Noir DB*) → Open. The script creates a virtual environment, installs the dependencies, builds the app with PyInstaller and copies it to *Applications*.
 
-Tests: `python -m unittest discover -s tests`.
+For development, run `python3 dev/dev_server.py` to open the interface in a browser with a real database. To run the tests: `python -m unittest discover -s tests`.
+
+### Project structure
+
+```
+app/
+  main.py        app window (pywebview) and macOS integration
+  server.py      local HTTP API on 127.0.0.1, protected by a token
+  api.py         API methods called by the UI and readable errors
+  db.py          all PostgreSQL work (psycopg 3)
+  store.py       connections, settings and history (passwords in the Keychain)
+  exporters.py   CSV and Excel export
+  tablefile.py   CSV and Excel import, type detection
+  sshtunnel.py   SSH tunnels through the system ssh
+  ui/            interface: plain JavaScript, HTML and CSS
+demo/            sample databases
+dev/             dev server, demo data and icon generators
+tests/           automated tests
+```
+
+Settings and connections are stored in `~/Library/Application Support/NoirDB/`. Passwords are kept in the macOS Keychain.
 
 ## License
 
-MIT – see [LICENSE](LICENSE). Author: Yan Kolbunov.
+MIT, see [LICENSE](LICENSE). Author: Yan Kolbunov.
 
 ---
 
 ## По-русски
 
-**Скачать и запустить (macOS, Apple Silicon):** на странице [Releases](../../releases) скачай `NoirDB-*.zip`, распакуй, перетащи **Noir DB.app** в «Программы». Приложение не заверено Apple, поэтому при первом запуске нажми **правый клик → «Открыть» → «Открыть»** (или «Системные настройки → Конфиденциальность и безопасность → Всё равно открыть»).
+**Noir DB** – клиент PostgreSQL для macOS с упором на SQL и анализ данных:
+- умный редактор с автодополнением, подсказками JOIN и исправлением ошибок в один клик;
+- правка таблиц в транзакциях;
+- графики, сводные таблицы и сравнение результатов;
+- импорт CSV и Excel;
+- SSH-туннели.
 
-Подробное описание возможностей и установка из исходников – ниже.
+Интерфейс на русском и английском, тёмная и светлая тема.
 
-Клиент для работы с SQL и аналитики в PostgreSQL под macOS, в чёрном стиле Apple. Python + pywebview, интерфейс на HTML/CSS/JS.
+**Как установить.** Нужен Mac с чипом Apple (M1 или новее).
+1. На странице [Releases](../../releases) скачай `NoirDB-*.zip` и распакуй его.
+2. Перетащи **Noir DB.app** в «Программы».
+3. Приложение не заверено Apple, поэтому при первом запуске нажми **правый клик → «Открыть» → «Открыть»**. Если не пускает: «Системные настройки → Конфиденциальность и безопасность → Всё равно открыть».
 
-Разработчик – Ян Колбунов (Yan Kolbunov), © 2026.
+Демо-базы для тренировки лежат в папке `demo`. Чтобы загрузить: «•••» рядом с выбором базы → «Новая база», затем «Импорт SQL».
 
-## Установка
-
-1. Правый клик по `Установить Noir DB.command` → «Открыть» → «Открыть».
-2. Подожди 2–4 минуты: установщик сам поставит всё нужное, соберёт приложение и положит его в «Программы».
-3. Noir DB откроется сам. Дальше запускай его как любое приложение – через Launchpad или Spotlight.
-
-Нужен Python 3.9 или новее. Если его нет, установщик откроет python.org – поставь Python и запусти установщик ещё раз.
-
-Демо-базы для тренировки: `demo/noir_shop.sql` (интернет-магазин) и `demo/noir_university.sql` (университет: факультеты, кафедры, преподаватели, группы, студенты, дисциплины, оценки с пересдачами, посещаемость, оплата контракта и готовые представления для отчётов). В приложении: «•••» рядом с выбором базы → «Новая база» → `shop` (или `university`), затем там же «Импорт SQL» → нужный файл.
-
-## Что умеет
-
-**Данные**
-- просмотр таблиц: сортировка, поиск по всем колонкам, 100 / 500 / 1000 строк на странице
-- правка прямо в таблице: клик по выбранной ячейке (или двойной клик, Enter, просто начать печатать) – курсор встаёт туда, куда кликнул; Tab – следующая колонка, `NULL` – пустое значение
-- новые строки прямо в таблице (пустая ячейка – база подставит значение по умолчанию), удаление строк с возможностью вернуть
-- все правки копятся (жёлтые – изменённые ячейки, зелёные – новые строки, красные – удалённые) и сохраняются кнопкой «Сохранить изменения» или ⌘S одной транзакцией: либо всё, либо ничего
-- при уходе со страницы с несохранёнными правками приложение спросит, сохранять ли их
-- выделение ячеек мышью (или Shift+клик): сумма, среднее, минимум, максимум и количество; ⌘C копирует выделенное таблицей: в Excel, Numbers и Google Таблицах – по ячейкам, в Заметках, Pages, Word и Почте – таблицей с рамками, в Telegram, WhatsApp и Slack – ровными колонками моноширинным шрифтом
-- «Выгрузить» → «Копировать таблицу» – весь результат в буфер, с названиями колонок; вставляется по ячейкам в Excel и Numbers, таблицей с рамками в Заметки, Pages, Word и Почту, ровными колонками в Telegram
-- выгрузка (кнопка «Выгрузить»): CSV и Excel – всей таблицы с учётом поиска и фильтров или всего результата запроса
-- фильтры по колонкам: воронка при наведении на заголовок; текст – «содержит / равно / пусто», числа и даты – «равно / больше / меньше / между», Да/Нет – выбор. Активные фильтры – чипы над таблицей, крестик убирает
-- статистика колонки: «⌄» в заголовке или правый клик по нему → «Статистика» – строк, пустых, уникальных, мин/макс/среднее/медиана, первая и последняя дата, частые значения, гистограмма. Считается по всей таблице с учётом фильтров (и по всему результату запроса)
-- связи: значения-ссылки синие, клик открывает связанную строку; правый клик по строке → «Где используется» – какие таблицы ссылаются на неё
-- поиск значения по всей базе: «•••» у выбора базы → «Найти значение…»; видно, в каких таблицах и колонках оно есть, с переходом к строкам; каждая таблица – не дольше 10 секунд, есть «Остановить»
-- импорт CSV и Excel (.xlsx) в таблицу с сопоставлением колонок
-- **новая таблица из файла**: «+» у «Таблиц» → «Таблица из файла…» – CSV или Excel; названия колонок (русские – транслитом) и типы (число, дата, да/нет, текст) угадываются по данным, их можно поправить; ключ id добавляется сам. «1 200,50», «31.12.2024» и «да/нет» понимаются
-- **колонка-ссылка при правке** (например, customer_id): под ячейкой список строк связанной таблицы с понятной подписью – «104 · Александров Александр»; поиск по номеру и по имени, ↑↓ и Enter
-- **посмотреть значение целиком**: двойной клик по ячейке результата запроса или правый клик → «Показать значение» – длинный текст полностью, JSON с отступами и подсветкой, кнопка «Копировать»
-
-**Структура**
-- конструктор таблиц, как в Access: поля заполняются строками, тип выбирается из списка (Текст, Число, Дата, Да/Нет, Счётчик…), отметки «Ключ», «Обязательное», «Уникальное», значение по умолчанию и описание
-- конструктор работает и для новых таблиц (плюс у «Таблиц» в боковой панели), и для существующих (вкладка «Конструктор» у таблицы): переименование, смена типа, добавление и удаление полей – одной транзакцией
-- «Показать SQL» – видно, какие команды выполнятся; их можно открыть в редакторе. SQL-редактор остаётся – конструктор его не заменяет
-- создание и удаление базы, импорт .sql-файлов (меню «•••» рядом с выбором базы; удаление – красным, только после ввода названия базы)
-- вкладка «Структура» – только просмотр: колонки, связи с другими таблицами (с переходом), индексы и DDL
-- схема базы картинкой: иконка схемы рядом с названием схемы (например, public) в сайдбаре. Карточки двигаются (позиции запоминаются), масштаб, «Упорядочить»; клик по таблице открывает её, по связи – готовый JOIN
-
-**SQL-редактор**
-- подсветка, номера строк, строка с ошибкой подсвечивается красным
-- **запрос под курсором**: если в редакторе несколько запросов через «;», ⌘↵ и «Выполнить» выполняют тот, где стоит курсор (он коротко подсвечивается); весь текст – ⇧⌘↵ или стрелка у «Выполнить» → «Выполнить всё»
-- **подсказки к ошибкам**: место ошибки подчёркнуто красной волной, под редактором – карточка: что случилось и исправленный запрос целиком – приложение по цепочке исправляет все ошибки (PostgreSQL только разбирает запрос, ничего не выполняя), изменённые слова выделены, одна кнопка «Исправить» (опечатка в колонке, таблице или команде, текст в двойных кавычках, лишняя или пропущенная запятая, колонки нет в GROUP BY, колонка есть в двух таблицах, необъявленный псевдоним – с готовым JOIN, ROUND с double, деление на ноль, неверная дата, подзапрос вернул несколько строк)
-- **проверка до запуска**: пока пишешь, жёлтой волной отмечаются незакрытые скобки и кавычки, неизвестные таблицы и колонки, опечатки в командах, `= NULL`, подсчёты без GROUP BY, даты вида `11.10.2025`; навёл мышь – подсказка и исправление в один клик (⌘Z отменяет)
-- автодополнение таблиц, колонок (в том числе по псевдонимам `o.`) и ключевых слов
-- **автодополнение JOIN по связям базы**: после `JOIN ` первыми идут связанные таблицы сразу с псевдонимом и условием (`customers c ON o.customer_id = c.id`), после `JOIN таблица ` – готовое `ON …`
-- режим транзакций (стрелка у «Выполнить»): «Авто» – каждый запрос сразу сохраняется, «Вручную» – изменения ждут «Сохранить (COMMIT)» или «Откатить»; в ручном режиме у кнопки видна метка «Транзакции вручную»
-- предупреждение об UPDATE и DELETE без WHERE
-- остановка долгого запроса, лимит времени в настройках
-- поиск и замена в редакторе: ⌘F (⌥⌘F – сразу с заменой), ↵ / ⇧↵ – следующее и предыдущее, «Все» – заменить всё; ⌘Z отменяет
-- ⌘/ – закомментировать выделенные строки или снять комментарий
-- сниппеты – готовые заготовки в подсказках: `sel`, `top`, `bymonth`, `month`, `share`, `running`, `rank`, `prev`, `dup`, `nulls`, `cte`, `casewhen` – набери и нажми Tab, выбери таблицу (или она подставится сама из FROM), а колонки сниппет подберёт по данным: категорию (статус, город), главную дату, сумму, уникальное значение. Подставленное можно поменять из списка; если подходящей колонки нет – будет подсказка
-- подсказка значений: после `status = '`, `city LIKE '` или `IN ('` выпадают реальные значения колонки с числом повторов
-- форматирование SQL: ⇧⌘F или стрелка у «Выполнить» → «Форматировать SQL» (ключевые слова ЗАГЛАВНЫМИ, переносы и отступы; строки и комментарии не трогаются; ⌘Z возвращает как было)
-- переменные в запросе: `{{город}}`, `{{дата_с}}` – над результатом появляются поля, значения подставляются безопасно и запоминаются (удобно для сохранённых отчётов)
-- графики по результату: линия, столбцы (до 4 рядов), круговая (от 2 до 16 долей, остальное – «Другое»; одинаковые подписи складываются, в подсказке видно, сколько строк сложено), гистограмма, точки
-- сводная таблица: строки, колонки, значение и функция (сумма, среднее, количество, мин, макс), итоги; считается по всему результату; выгружается в Excel
-- сравнение: закрепить результат как «было», изменить запрос и выполнить – видно добавленные, удалённые и изменённые строки по выбранному ключу
-- выгрузка для отчёта: график картинкой PNG, в Excel – данные и график на отдельном листе
-- **представление (VIEW) из запроса**: «Сохранить ▾ → Представление в базе…» – запрос сохраняется в самой базе, его видят pgAdmin, Excel и BI-программы
-- запросы в .sql-файлы и обратно – кнопка «Файл ▾» (сохранить, сохранить в новый файл, открыть файл); в раздел «Сохранённое» в боковой панели – кнопка «Сохранить ▾»
-
-**Сохранённое** (запросы и таблицы) – чтобы не писать один и тот же запрос снова
-- «Сохранить ▾ → Сохранить таблицу…» над результатом, два варианта:
-  - **Обновляется** – при открытии запрос выполняется заново, данные всегда свежие;
-  - **На текущий момент** – результат сохраняется настоящей таблицей в базе (например, `zarplaty_sotrudnikov_2026_10_11`) и дальше не меняется
-- открываются одним кликом в разделе «Сохранённое»; там же лежат сохранённые запросы
-- у таблиц «на текущий момент» рядом видна дата; убрать из списка – правый клик (сама таблица в базе при этом остаётся)
-- история запросов (крестик убирает один запрос, «Очистить историю» – все), вкладки сохраняются между запусками
-- свои числа строк: «Своё число…» внизу таблицы и поля «Строк на странице» / «Строк в запросе» в настройках (10–100 000)
-
-**Оформление**
-- тёмная и светлая тема; в светлой – цветные значки (таблицы, представления, запросы, сохранённые таблицы)
-- режим **Liquid Glass**, как в новых macOS: «Настройки → Оформление», в тёмной и светлой теме
-- выравнивание значений в колонке (по левому краю, по центру, по правому) – меню «⌄» в заголовке колонки, запоминается
-- «Закрыть все вкладки» – кнопка справа в строке вкладок и правый клик по вкладке, с подтверждением
-- тёмная или светлая тема, или «как в системе» – шестерёнка справа от «Подключения» вверху сайдбара → «Оформление»
-- двойной клик по верхней полосе окна растягивает его на весь экран, как в других приложениях Mac
-
-**Безопасность и надёжность**
-- режим «только чтение» для подключения – изменить данные нельзя ни кнопками, ни запросами
-- цветная метка подключения (например, красная для рабочей базы) видна в заголовке окна
-- автоматическое переподключение после сна Mac; если при этом потерялись несохранённые изменения из редактора, приложение об этом скажет
-- понятные сообщения для частых ошибок PostgreSQL (исходный текст тоже показывается)
-- плашка при закрытии: сохранить или нет изменения в базе и вкладки с запросами
-- пароли хранятся в Связке ключей macOS
-- **подключение через SSH-туннель** – для баз на серверах, куда напрямую не пускают: в окне подключения «Подключаться через SSH-туннель», вход по ключу из ~/.ssh (или указанному файлу) или по паролю; туннель поднимается сам, в том числе после сна Mac, и закрывается вместе с приложением
-
-Всё, что удаляет данные, подсвечено красным и требует подтверждения. Удаление таблицы или колонки – только после ввода её названия.
-
-Редактировать строки можно в таблицах с первичным ключом.
-
-## Горячие клавиши
-
-| Клавиши | Действие |
-|---|---|
-| ⌘ ↵ | выполнить запрос под курсором (или выделенный кусок) |
-| ⇧ ⌘ ↵ | выполнить весь текст редактора |
-| ⌘ S | в таблице – сохранить изменения, в редакторе – сохранить запрос |
-| ⌘ T | новый запрос |
-| ⇧ ⌘ F | отформатировать SQL |
-| ⌘ F | найти и заменить в редакторе |
-| ⌘ / | закомментировать строки |
-| ⌘ C | скопировать значение выбранной ячейки |
-| Ctrl Пробел | показать подсказки |
-| Tab / Shift Tab | при правке ячейки – следующая / предыдущая колонка |
-
-## Обновление
-
-В приложении: шестерёнка справа от «Подключения» вверху сайдбара → «Обновить из архива…» → выбрать новый `noir-db.zip`. Приложение закроется, установит новую версию и откроется само.
-
-Или вручную: распакуй новую версию и запусти `Установить Noir DB.command`. Подключения, пароли и настройки сохранятся.
-
-## Где лежат настройки
-
-`~/Library/Application Support/NoirDB/` – подключения (без паролей), настройки, история, сохранённые запросы и таблицы.
-
-## Структура
-
-```
-app/
-  db.py      работа с PostgreSQL
-  store.py   подключения, настройки, история
-  api.py     методы, которые вызывает интерфейс
-  server.py  локальный сервер на 127.0.0.1 с токеном – по нему интерфейс вызывает api.py
-  main.py    окно приложения
-  exporters.py  выгрузка в CSV и Excel
-  tablefile.py  чтение CSV и Excel для импорта, угадывание типов колонок
-  sshtunnel.py  SSH-туннель через системный ssh
-  version.py номер версии
-  ui/        интерфейс: core.js (основа), sidebar.js, editor.js, table.js, design.js (конструктор), grid.js, chart.js, main.js,
-             sqlfmt.js (форматирование SQL), search.js (поиск по базе), diagram.js (схема базы),
-             i18n.js (тексты RU/EN), icons.js, styles.css
-demo/        демо-база интернет-магазина (noir_shop.sql)
-dev/         генератор демо-базы, иконки и запуск интерфейса в браузере
-tests/       автотесты: .venv/bin/python -m unittest discover -s tests
-```
+Разработчик – Ян Колбунов, © 2026.
