@@ -50,6 +50,8 @@ def safe(fn):
             args = {}
             state = diag.sqlstate if diag else None
             detail = (diag.message_detail or "") if diag else ""
+            # первое имя в кавычках – запасной разбор, если сервер пишет не по-английски
+            q1 = re.search(r'"([^"]+)"', msg)
             if state == "23503":            # внешний ключ
                 m = re.findall(r'table "([^"]+)"', msg)
                 if "still referenced" in detail or "is still referenced" in msg:
@@ -78,16 +80,16 @@ def safe(fn):
                 elif d:
                     code, args = "BAD_DATE", {"v": d.group(1)}
             elif state == "42703":          # нет такой колонки
-                m = re.search(r'column "?([^"]+?)"? of relation', msg) or re.search(r'column "?([^"]+?)"? does not exist', msg)
-                code, args = "NO_COLUMN", {"c": m.group(1) if m else ""}
-            elif state == "42P01" and "missing FROM-clause entry" in msg:   # псевдоним не объявлен
-                m = re.search(r'for table "([^"]+)"', msg)
+                m = re.search(r'column "?([^"]+?)"? of relation', msg) or re.search(r'column "?([^"]+?)"? does not exist', msg) or q1 or re.search(r'^\S+ ([\w.$]+) ', msg)
+                code, args = "NO_COLUMN", {"c": m.group(1).split(".")[-1] if m else ""}
+            elif state == "42P01" and "FROM" in msg:   # псевдоним не объявлен (на любом языке в тексте есть «FROM»)
+                m = re.search(r'for table "([^"]+)"', msg) or q1
                 code, args = "NO_ALIAS", {"t": m.group(1) if m else ""}
             elif state == "42P01":          # нет такой таблицы
-                m = re.search(r'relation "([^"]+)" does not exist', msg)
+                m = re.search(r'relation "([^"]+)" does not exist', msg) or q1
                 code, args = "NO_TABLE", {"t": m.group(1) if m else ""}
             elif state == "42702":          # колонка есть в нескольких таблицах
-                m = re.search(r'column reference "([^"]+)" is ambiguous', msg)
+                m = re.search(r'column reference "([^"]+)" is ambiguous', msg) or q1
                 code, args = "AMBIGUOUS", {"c": m.group(1) if m else ""}
             elif state == "22012":
                 code, args = "DIV_ZERO", {}
@@ -107,10 +109,10 @@ def safe(fn):
             elif state == "42883":          # нет такой функции/оператора
                 code, args = "NO_FUNCTION", {}
             elif state == "42803":          # GROUP BY
-                m = re.search(r'column "([^"]+)" must appear in the GROUP BY', msg)
+                m = re.search(r'column "([^"]+)" must appear in the GROUP BY', msg) or q1
                 code, args = "GROUP_BY", {"c": m.group(1) if m else ""}
             elif state in ("42P07", "42701", "42710", "42P04"):    # уже существует
-                m = re.search(r'"([^"]+)" already exists', msg)
+                m = re.search(r'"([^"]+)" already exists', msg) or q1
                 code, args = "EXISTS", {"t": m.group(1) if m else ""}
             elif state == "2BP01":          # от объекта зависят представления и т. п.
                 m = re.search(r'(view|представление) ([\w."]+)', detail)

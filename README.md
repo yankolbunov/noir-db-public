@@ -8,6 +8,8 @@ Noir DB combines a smart SQL editor, safe transactional table editing and built-
 
 The interface is available in English and Russian (Settings → Appearance → Language).
 
+![SQL editor with a query result](docs/screenshots/01-editor.png)
+
 ## Download and run
 
 Requirements: macOS on Apple Silicon (M1 or newer) and a PostgreSQL server (local or remote).
@@ -18,6 +20,18 @@ Requirements: macOS on Apple Silicon (M1 or newer) and a PostgreSQL server (loca
 4. Add a connection to your PostgreSQL server. Passwords are stored in the macOS Keychain.
 
 **Sample databases.** Two demo databases with made-up data are included: `demo/noir_shop.sql` (an online shop) and `demo/noir_university.sql` (a university with faculties, students, grades and payments). To load one in the app, click **•••** next to the database picker → *New database*, then *Import SQL* → choose the file.
+
+## Screenshots
+
+| Charts from a query result | One-click error fixes |
+|---|---|
+| ![Chart](docs/screenshots/02-chart.png) | ![Error assistant](docs/screenshots/03-error.png) |
+| **Editable table data** | **Database diagram** |
+| ![Table data](docs/screenshots/04-table.png) | ![Database diagram](docs/screenshots/05-diagram.png) |
+
+![Light theme](docs/screenshots/06-light.png)
+
+*Screenshots use the bundled demo database with made-up data.*
 
 ## Features
 

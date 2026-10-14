@@ -296,7 +296,7 @@ async function sqlDiagnose(tab, err, base, bound, textArg) {
   if (tk) out.at = { s: tk.s, e: tk.e };
 
   if (state === '42703') {                                   // нет колонки
-    const m = /column (?:"?([^"\s.]+)"?\.)?"?([^"]+?)"? of relation/.exec(msg) || /column (?:"?([^"\s.]+)"?\.)?"?(.+?)"? does not exist/.exec(msg);
+    const m = /column (?:"?([^"\s.]+)"?\.)?"?([^"]+?)"? of relation/.exec(msg) || /column (?:"?([^"\s.]+)"?\.)?"?(.+?)"? does not exist/.exec(msg) || /"(?:([^"\s.]+)\.)?([^"]+)"/.exec(msg);
     const name = m ? m[2] : (tk ? sqName(tk.v) : '');
     let q = tk && isIdent(tk) ? qualAt(tk) : null;
     if (!q && name) {                                        // без позиции (с переменными) – ищем по имени
@@ -336,8 +336,8 @@ async function sqlDiagnose(tab, err, base, bound, textArg) {
     // подсказка самого PostgreSQL: Perhaps you meant to reference the column "o.total"
     const hm = /column "([^"]+)"/.exec(err.hint || '');
     if (hm && q && !out.fixes.some(f => f.edits[0].text === quoteId(hm[1].split('.').pop()))) fix(t('sqReplace', { v: sqCode(hm[1]) }), [{ s: q.s, e: q.e, text: hm[1] }]);
-  } else if (state === '42P01' && /missing FROM-clause entry for table "([^"]+)"/.test(msg)) {   // псевдоним не объявлен
-    const a = /missing FROM-clause entry for table "([^"]+)"/.exec(msg)[1];
+  } else if (state === '42P01' && /\bFROM\b/.test(msg) && /"([^"]+)"/.test(msg)) {   // псевдоним не объявлен (в тексте на любом языке есть «FROM»)
+    const a = (/missing FROM-clause entry for table "([^"]+)"/.exec(msg) || /"([^"]+)"/.exec(msg))[1];
     const atk = tk && isIdent(tk) ? tk : sig.find(x => isIdent(x) && sqName(x.v) === a && sig[idx(x) + 1] && sig[idx(x) + 1].v === '.');
     if (atk) out.at = { s: atk.s, e: atk.e };
     // короткий заголовок и пояснение: «Таблица «o» не подключена»
@@ -366,7 +366,7 @@ async function sqlDiagnose(tab, err, base, bound, textArg) {
       });
     }
   } else if (state === '42P01') {                            // нет таблицы
-    const m = /relation "([^"]+)" does not exist/.exec(msg);
+    const m = /relation "([^"]+)" does not exist/.exec(msg) || /"([^"]+)"/.exec(msg);
     const name = m ? m[1] : '';
     let q = tk && isIdent(tk) ? qualAt(tk) : null;
     if (!q && name) { const f = sig.find(x => isIdent(x) && sqName(x.v) === name.split('.').pop().toLowerCase()); if (f) q = qualAt(f); }
@@ -381,7 +381,7 @@ async function sqlDiagnose(tab, err, base, bound, textArg) {
     }
     if (!out.fixes.length) tip(t('sqTblWrongDb', { d: sqCode(S.info[tab.conn] ? S.info[tab.conn].db : '') }));
   } else if (state === '42702') {                            // колонка есть в нескольких таблицах
-    const m = /column reference "([^"]+)" is ambiguous/.exec(msg);
+    const m = /column reference "([^"]+)" is ambiguous/.exec(msg) || /"([^"]+)"/.exec(msg);
     const c = m ? m[1] : (tk ? sqName(tk.v) : '');
     const at = tk && isIdent(tk) ? tk : sig.find(x => isIdent(x) && sqName(x.v) === c);
     if (at) {
@@ -392,7 +392,7 @@ async function sqlDiagnose(tab, err, base, bound, textArg) {
       });
     }
   } else if (state === '42803') {                            // колонка не в GROUP BY
-    const m = /column "([^"]+)" must appear in the GROUP BY/.exec(msg);
+    const m = /column "([^"]+)" must appear in the GROUP BY/.exec(msg) || /"([^"]+)"/.exec(msg);
     const col = m ? m[1] : '';
     const q = tk && isIdent(tk) ? qualAt(tk) : null;
     if (q) out.at = { s: q.s, e: q.e };

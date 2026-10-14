@@ -101,8 +101,24 @@ class PgSession:
             if self.tunnel is not None and re.search(r"closed the connection unexpectedly|server closed|connection refused", str(e), re.I):
                 raise RuntimeError("SSH_FORWARD")
             raise
+        self._english_messages(c)
         self._used[id(c)] = time.time()
         return c
+
+    @staticmethod
+    def _english_messages(c):
+        """Сообщения сервера – по-английски: по ним приложение узнаёт имя колонки, таблицы и т. п.
+        (PostgreSQL с русской локалью пишет «столбец "x" не существует»). Менять язык сообщений может
+        только суперпользователь – у остальных разбор берёт имя из кавычек, на любом языке."""
+        try:
+            c.execute("set lc_messages to 'C'")
+            if not c.autocommit:
+                c.commit()
+        except psycopg.Error:
+            try:
+                c.rollback()
+            except Exception:
+                pass
 
     def connect(self, dbname=None):
         if dbname:
